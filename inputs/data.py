@@ -115,6 +115,7 @@ def import_land_use(grid, options, param, data_rdp, housing_types_grid):
     elif options["coeff_land"] == 'new':
         informal = (informal_risks_short.area / area_pixel) #Aires qui peut potentiellement être occupée par des logements informels
     elif options["coeff_land"] == 'data':
+        print("using data")
         informal = housing_types_grid.informal_grid_2011 * param["shack_size"] / (250000 * 0.4)
         informal[informal <0] = 0
         informal[informal > 1] = 1
@@ -188,7 +189,7 @@ def import_land_use(grid, options, param, data_rdp, housing_types_grid):
 
     return spline_estimate_RDP, spline_land_backyard, spline_land_RDP, spline_RDP, spline_land_constraints, informal, coeff_land_backyard
 
-def import_floods_data():
+def import_floods_data(options, param):
     
     #Import floods data
     floods = ['FD_5yr', 'FD_10yr', 'FD_20yr', 'FD_50yr', 'FD_75yr', 'FD_100yr', 'FD_200yr', 'FD_250yr', 'FD_500yr', 'FD_1000yr']
@@ -205,6 +206,18 @@ def import_floods_data():
     for flood in floods:
         type_flood = copy.deepcopy(flood)
         d[flood] = np.squeeze(pd.read_excel(path_data + flood + ".xlsx"))
+        
+        
+    if options["WBUS2"] == 1:
+        WBUS2_20yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_20yr.xlsx")
+        WBUS2_50yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_50yr.xlsx")
+        WBUS2_100yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_100yr.xlsx")
+        d['FD_20yr'].prop_flood_prone = np.fmax(d['FD_20yr'].prop_flood_prone, WBUS2_20yr.prop_flood_prone)
+        d['FD_50yr'].prop_flood_prone = np.fmax(d['FD_50yr'].prop_flood_prone, WBUS2_50yr.prop_flood_prone)
+        d['FD_100yr'].prop_flood_prone = np.fmax(d['FD_100yr'].prop_flood_prone, WBUS2_100yr.prop_flood_prone)
+        d['FD_20yr'].flood_depth = np.maximum(d['FD_20yr'].prop_flood_prone, param["depth_WBUS2_20yr"])
+        d['FD_50yr'].flood_depth = np.maximum(d['FD_50yr'].prop_flood_prone, param["depth_WBUS2_50yr"])
+        d['FD_100yr'].flood_depth = np.maximum(d['FD_100yr'].prop_flood_prone, param["depth_WBUS2_100yr"])
 
     interval0 = 1 - (1/5)    
     interval1 = (1/5) - (1/10)
@@ -245,10 +258,12 @@ def import_floods_data():
     d_structure = 0.5 * ((interval0 * damages0) + (interval1 * damages1) + (interval2 * damages2) + (interval3 * damages3) + (interval4 * damages4) + (interval5 * damages5) + (interval6 * damages6) + (interval7 * damages7) + (interval8 * damages8) + (interval9 * damages9) + (interval10 * damages10))
     d_contents = 0.5 * ((interval0 * damages_contents0) + (interval1 * damages_contents1) + (interval2 * damages_contents2) + (interval3 * damages_contents3) + (interval4 * damages_contents4) + (interval5 * damages_contents5) + (interval6 * damages_contents6) + (interval7 * damages_contents7) + (interval8 * damages_contents8) + (interval9 * damages_contents9) + (interval10 * damages_contents10))
     
+    
     fraction_capital_destroyed = pd.DataFrame()
+    
     fraction_capital_destroyed["structure"] = d_structure
     fraction_capital_destroyed["contents"] = d_contents
-    
+        
     return fraction_capital_destroyed, structural_damages, content_damages
 
 def import_macro_data(param):

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import copy
 
-from data import *
+from inputs.data import *
 
 def error_map(error, grid, export_name):
     map = plt.scatter(grid.x, 
@@ -46,11 +46,12 @@ def export_map(value, grid, export_name, lim):
 def export_housing_types(housing_type_1, households_center_1, housing_type_2, households_center_2, name, legend1, legend2):
     
     #Graph validation housing type
-    data = pd.DataFrame({legend1: np.nansum(housing_type_1, 1), legend2: housing_type_2}, index = ["FP", "IB", "IS", "FS"])
+    data = pd.DataFrame({legend1: np.nansum(housing_type_1, 1), legend2: housing_type_2}, index = ["Formal private", "Informal in \n backyards", "Informal \n settlements", "Formal subsidized"])
     data.plot(kind="bar")
-    plt.title("Housing types")
+    #plt.title("Housing types")
     plt.ylabel("Households")
     plt.tick_params(labelbottom=True)
+    plt.xticks(rotation='horizontal')
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_housing_type.png')
     plt.close()
     
@@ -60,6 +61,7 @@ def export_housing_types(housing_type_1, households_center_1, housing_type_2, ho
     plt.title("Income classes")
     plt.ylabel("Households")
     plt.tick_params(labelbottom=True)
+    plt.xticks(rotation='horizontal')
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_income_class.png')
     plt.close()
         
@@ -72,6 +74,9 @@ def export_density_rents_sizes(grid, name, data_rdp, housing_types_grid, initial
 
     os.mkdir('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/housing_types')
 
+    inf_dwellings_2013 = pd.read_excel('C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/inf_dwellings_2013.xlsx').iloc[:, 1]
+    inf_dwellings_2013[np.isnan(inf_dwellings_2013)] = 0
+    
     #Formal
     error = (initial_state_households_housing_types[0, :] / count_formal - 1) * 100
     error_map(error, grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '\housing_types/formal_diff_with_data.png')  
@@ -92,6 +97,7 @@ def export_density_rents_sizes(grid, name, data_rdp, housing_types_grid, initial
     export_map(housing_types_grid.informal_grid_2011, grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '\housing_types/informal_data.png', 800)
     export_map(initial_state_households_housing_types[2, :], grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '\housing_types/informal_simul.png', 800)
     export_map(simul1_households_housing_type[0, 2, :], grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '\housing_types/informal_Basile1.png', 800)
+    export_map(inf_dwellings_2013, grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '\housing_types/informal_data_Claus_2013.png', 800)
     
     #Backyard
     error = (initial_state_households_housing_types[1, :] / housing_types_grid.backyard_grid_2011 - 1) * 100
@@ -178,12 +184,13 @@ def validation_density(grid, initial_state_households_housing_types, name):
     plt.legend()
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Households density (per km2)") 
-    plt.tick_params(bottom = True,labelbottom=True)   
-    plt.title("Population density")
+    plt.tick_params(bottom = True,labelbottom=True)  
+    plt.tick_params(labelbottom=True)
+    #plt.title("Population density")
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density.png')  
     plt.close()
     
-def validation_density_housing_types(grid,initial_state_households_housing_types, housing_types_grid, name):
+def validation_density_housing_types(grid,initial_state_households_housing_types, housing_types_grid, name, absolute_number):
 
     #Housing types
     xData = grid.dist
@@ -194,10 +201,12 @@ def validation_density_housing_types(grid,initial_state_households_housing_types
     informal_simul = (initial_state_households_housing_types[2, :]) / 0.25
     backyard_simul = (initial_state_households_housing_types[1, :]) / 0.25
 
+    #df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul, coeff_land[1, :]])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul", "informal_land"])
     df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul"])
     df["round"] = round(df.xData)
     new_df = df.groupby(['round']).mean()
-
+    
+    plt.figure(figsize=(10, 7))
     plt.plot(np.arange(max(df["round"] + 1)), new_df.formal_data, color = "black", label = "Data")
     plt.plot(np.arange(max(df["round"] + 1)), new_df.formal_simul, color = "green", label = "Simulation")
     axes = plt.axes()
@@ -205,13 +214,16 @@ def validation_density_housing_types(grid,initial_state_households_housing_types
     axes.set_xlim([0, 40])
     #plt.title("Formal")
     plt.legend()
+    plt.tick_params(labelbottom=True)
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Households density (per km2)")
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_formal.png')  
     plt.close()
 
+    plt.figure(figsize=(10, 7))
     plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_data, color = "black", label = "Data")
     plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_simul, color = "green", label = "Simulation")
+    #plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_land * 300 / 0.009, color = "red", label = "Informal land")   
     axes = plt.axes()
     axes.set_ylim([0, 400])
     axes.set_xlim([0, 40])
@@ -219,9 +231,12 @@ def validation_density_housing_types(grid,initial_state_households_housing_types
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Households density (per km2)")
     plt.legend()
+    plt.tick_params(labelbottom=True)
+    plt.xticks([10.5, 13, 16, 18, 24, 25, 27, 30, 37, 39, 46.5], ["Joe Slovo", "Hout Bay", "Du Noon", "Philippi", "Khayelitsa" , "Wallacedene", "Khayelitsa", "Witsand", "Enkanini", "Pholile"], rotation ='vertical')
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_informal.png')  
     plt.close()
-
+    
+    plt.figure(figsize=(10, 7))
     plt.plot(np.arange(max(df["round"] + 1)), new_df.backyard_data, color = "black", label = "Data")
     plt.plot(np.arange(max(df["round"] + 1)), new_df.backyard_simul, color = "green", label = "Simulation")
     axes = plt.axes()
@@ -229,10 +244,54 @@ def validation_density_housing_types(grid,initial_state_households_housing_types
     axes.set_xlim([0, 40])
     #plt.title("Backyard")
     plt.legend()
+    plt.tick_params(labelbottom=True)
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Households density (per km2)")
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_backyard.png')  
     plt.close()
+    
+    if absolute_number == 1:
+        new_df2 = df.groupby(['round']).sum()
+        
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.formal_data, color = "black", label = "Data")
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.formal_simul, color = "green", label = "Simulation")
+        axes = plt.axes()
+        #axes.set_ylim([0, 1600])
+        axes.set_xlim([0, 40])
+        #plt.title("Formal")
+        plt.legend()
+        plt.tick_params(labelbottom=True)
+        plt.xlabel("Distance to the city center (km)")
+        plt.ylabel("Absolute number of dwellings")
+        plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_formal_absolute.png')  
+        plt.close()
+
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.informal_data, color = "black", label = "Data")
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.informal_simul, color = "green", label = "Simulation")
+        axes = plt.axes()
+        #axes.set_ylim([0, 400])
+        axes.set_xlim([0, 40])
+        #plt.title("Informal")
+        plt.xlabel("Distance to the city center (km)")
+        plt.ylabel("Absolute number of dwellings")
+        plt.legend()
+        plt.tick_params(labelbottom=True)
+        plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_informal_absolute.png')  
+        plt.close()
+
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.backyard_data, color = "black", label = "Data")
+        plt.plot(np.arange(max(df["round"] + 1)), new_df2.backyard_simul, color = "green", label = "Simulation")
+        axes = plt.axes()
+        #axes.set_ylim([0, 450])
+        axes.set_xlim([0, 40])
+        #plt.title("Backyard")
+        plt.legend()
+        plt.tick_params(labelbottom=True)
+        plt.xlabel("Distance to the city center (km)")
+        plt.ylabel("Absolute number of dwellings")
+        plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_backyard_absolute.png')  
+        plt.close()
+        
 
 def validation_housing_price(grid, initial_state_rent, interest_rate, param, center, name):
     
@@ -261,9 +320,20 @@ def validation_housing_price(grid, initial_state_rent, interest_rate, param, cen
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Price (R/m2 of land)")
     plt.legend()
+    plt.tick_params(labelbottom=True)
     plt.tick_params(bottom = True,labelbottom=True)
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_housing_price.png')  
     plt.close()
+    
+def plot_diagnosis_map_informl(grid, coeff_land, initial_state_households_housing_types, name):
+    plt.scatter(grid.x, grid.y, color = "lightgrey")   
+    plt.scatter(grid.x, grid.y, s=None, c=coeff_land[2, :], cmap = 'Greys', marker='.')   
+    plt.scatter(grid.x[initial_state_households_housing_types[2, :] > 0], grid.y[initial_state_households_housing_types[2, :] > 0], s=None, c=initial_state_households_housing_types[2, :][initial_state_households_housing_types[2, :] > 0], cmap = 'Reds', marker='.')   
+    plt.colorbar()
+    plt.axis('off')
+    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/diagnosis_informal.png')
+    plt.close()
+    
     
 
 

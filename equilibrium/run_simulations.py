@@ -8,9 +8,9 @@ Created on Fri Nov  6 16:23:16 2020
 import copy
 import numpy as np
 
-from functions_dynamic import *
-from compute_equilibrium import *
-from data import *
+from equilibrium.functions_dynamic import *
+from equilibrium.compute_equilibrium import *
+from inputs.data import *
 
 def run_simulation(t, options, income_2011, param, grid, initial_state_utility, initial_state_error, initial_state_households, initial_state_households_housing_types, initial_state_housing_supply, initial_state_household_centers, initial_state_average_income, initial_state_rent, initial_state_dwelling_size, fraction_capital_destroyed, amenities, housing_limit, spline_estimate_RDP, spline_land_constraints, spline_land_backyard, spline_land_RDP, informal, income_class_by_housing_type):
     

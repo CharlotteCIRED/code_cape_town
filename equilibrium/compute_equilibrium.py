@@ -10,7 +10,7 @@ import scipy.io
 import pandas as pd
 import numpy.matlib
 
-from compute_outputs import *
+from equilibrium.compute_outputs import *
 
 def compute_equilibrium(fraction_capital_destroyed, amenities, param, housing_limit, population, households_per_income_class, total_RDP, coeff_land, income_net_of_commuting_costs, grid, options, agricultural_rent, interest_rate, number_properties_RDP, average_income, mean_income, income_class_by_housing_type, minimum_housing_supply, construction_param):
     
@@ -53,9 +53,9 @@ def compute_equilibrium(fraction_capital_destroyed, amenities, param, housing_li
     
     #Initialisation solver
     utility = np.zeros((param["max_iter"], param["nb_of_income_classes"]))
-    utility[0,:] = np.array([1678, 3578, 16433, 76514])
+    utility[0,:] = np.array([1630, 4833, 16967, 79901])
     index_iteration = 0
-    param["convergence_factor"] = 0.045 * (np.nanmean(average_income) / mean_income) ** 0.4
+    param["convergence_factor"] = 0.02 * (np.nanmean(average_income) / mean_income) ** 0.4 #0.045
 
     #Compute outputs solver - first iteration
     simulated_jobs[index_iteration, 0, :], rent_matrix[index_iteration, 0, :], simulated_people_housing_types[index_iteration,0,:], simulated_people[0,:,:], housing_supply[0,:], dwelling_size[0,:], R_mat[0,:,:] = compute_outputs('formal', utility[index_iteration,:], amenities, param, income_net_of_commuting_costs, fraction_capital_destroyed, grid, income_class_by_housing_type, options, housing_limit, agricultural_rent, interest_rate, coeff_land[0, :], minimum_housing_supply, construction_param, housing_in)
@@ -82,6 +82,7 @@ def compute_equilibrium(fraction_capital_destroyed, amenities, param, housing_li
     
         #Adjust parameters
         index_iteration = index_iteration + 1
+        print(index_iteration)
         utility[index_iteration, :] = np.exp(np.log(utility[index_iteration - 1, :]) + diff_utility[index_iteration - 1, :]) 
         utility[index_iteration, utility[index_iteration, :] < 0] = 10
         convergence_factor = param["convergence_factor"] / (1 + 0.5 * np.abs((total_simulated_jobs[index_iteration, :] + 100) / (households_per_income_class + 100) -1)) #.*(Jval./mean(Jval)).^0.3 %We adjust the parameter to how close we are from objective 

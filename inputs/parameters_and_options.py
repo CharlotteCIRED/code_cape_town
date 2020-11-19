@@ -36,13 +36,13 @@ def import_param(options):
     
     param["depreciation_rate"] = 0.025
     param["interest_rate"] = 0.025    
-    param["shack_size"] = 20 #Size of a backyard shack (m2)
+    param["shack_size"] = 14 #Size of a backyard shack (m2)
     param["RDP_size"] = 40 #Size of a RDP house (m2)
     param["backyard_size"] = 70 #size of the backyard of a RDP house (m2)
     param["future_rate_public_housing"] = 5000
     param["informal_structure_value"] = 4000
-    param["subsidized_structure_value"] = 150000
     param["fraction_z_dwellings"] = 0.49
+    param["subsidized_structure_value"] = 150000
         
     #Land Use
     param["max_land_use"] = 0.7
@@ -71,13 +71,18 @@ def import_param(options):
     param["time_cost"] = 1
     
     #Solver
-    param["max_iter"] = 1000
+    param["max_iter"] = 500
     param["precision"] = 0.01
     
     #Dynamic
     param["time_invest_housing"] = 3
     param["time_depreciation_buildings"] = 100
     param["iter_calc_lite"] = 1
+    
+    #WBUS2
+    param["depth_WBUS2_20yr"] = 0.2
+    param["depth_WBUS2_50yr"] = 0.4
+    param["depth_WBUS2_100yr"] = 0.7
     
     
     return param

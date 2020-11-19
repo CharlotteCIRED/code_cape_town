@@ -13,15 +13,28 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import copy
 
-from data import *
+from inputs.data import *
 
-def compute_stats_per_housing_type(floods, path_data, nb_households_formal, nb_households_subsidized, nb_households_informal, nb_households_backyard):
+def compute_stats_per_housing_type(floods, path_data, nb_households_formal, nb_households_subsidized, nb_households_informal, nb_households_backyard, options, param):
     stats_per_housing_type = pd.DataFrame(columns = ['flood',
                                                      'fraction_formal_in_flood_prone_area', 'fraction_subsidized_in_flood_prone_area', 'fraction_informal_in_flood_prone_area', 'fraction_backyard_in_flood_prone_area',
                                                      'flood_depth_formal', 'flood_depth_subsidized', 'flood_depth_informal', 'flood_depth_backyard'])
     for flood in floods:
         type_flood = copy.deepcopy(flood)
         flood = np.squeeze(pd.read_excel(path_data + flood + ".xlsx"))
+        if (type_flood == 'FD_20yr') & (options["WBUS2"] == 1):
+            WBUS2_20yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_20yr.xlsx")
+            flood.prop_flood_prone = np.fmax(flood.prop_flood_prone, WBUS2_20yr.prop_flood_prone)
+            flood.flood_depth = np.maximum(flood.prop_flood_prone, param["depth_WBUS2_20yr"])
+        if (type_flood == 'FD_50yr') & (options["WBUS2"] == 1):
+            WBUS2_50yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_50yr.xlsx")
+            flood.prop_flood_prone = np.fmax(flood.prop_flood_prone, WBUS2_50yr.prop_flood_prone)
+            flood.flood_depth = np.maximum(flood.prop_flood_prone, param["depth_WBUS2_50yr"])
+        if (type_flood == 'FD_100yr') & (options["WBUS2"] == 1):
+            WBUS2_100yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_100yr.xlsx")
+            flood.prop_flood_prone = np.fmax(flood.prop_flood_prone, WBUS2_100yr.prop_flood_prone)
+            flood.flood_depth = np.maximum(flood.prop_flood_prone, param["depth_WBUS2_100yr"])
+        
         stats_per_housing_type = stats_per_housing_type.append({'flood': type_flood, 
                                                                 #'fraction_formal_in_flood_prone_area': np.sum(flood['prop_flood_prone'] * nb_households_formal) / sum(nb_households_formal), 
                                                                 #'fraction_subsidized_in_flood_prone_area': np.sum(flood['prop_flood_prone'] * nb_households_subsidized) / sum(nb_households_subsidized),
@@ -39,7 +52,7 @@ def compute_stats_per_housing_type(floods, path_data, nb_households_formal, nb_h
 
 def compute_damages(floods, path_data, param, content_cost,
                     nb_households_formal, nb_households_subsidized, nb_households_informal, nb_households_backyard,
-                    formal_structure_cost, depth_damage_function_structure, depth_damage_function_contents):
+                    formal_structure_cost, depth_damage_function_structure, depth_damage_function_contents, options):
     
     floods = ['FD_5yr', 'FD_10yr', 'FD_20yr', 'FD_50yr', 'FD_75yr', 'FD_100yr', 'FD_200yr', 'FD_250yr', 'FD_500yr', 'FD_1000yr']
     path_data = "C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/FATHOM/"
@@ -57,6 +70,19 @@ def compute_damages(floods, path_data, param, content_cost,
     for item in floods:
         type_flood = copy.deepcopy(item)
         data_flood = np.squeeze(pd.read_excel(path_data + item + ".xlsx"))
+        
+        if (type_flood == 'FD_20yr') & (options["WBUS2"] == 1):
+            WBUS2_20yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_20yr.xlsx")
+            data_flood.prop_flood_prone = np.fmax(data_flood.prop_flood_prone, WBUS2_20yr.prop_flood_prone)
+            data_flood.flood_depth = np.maximum(data_flood.prop_flood_prone, param["depth_WBUS2_20yr"])
+        if (type_flood == 'FD_50yr') & (options["WBUS2"] == 1):
+            WBUS2_50yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_50yr.xlsx")
+            data_flood.prop_flood_prone = np.fmax(data_flood.prop_flood_prone, WBUS2_50yr.prop_flood_prone)
+            data_flood.flood_depth = np.maximum(data_flood.prop_flood_prone, param["depth_WBUS2_50yr"])
+        if (type_flood == 'FD_100yr') & (options["WBUS2"] == 1):
+            WBUS2_100yr = pd.read_excel("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Flood plains - from Claus/WBUS2_100yr.xlsx")
+            data_flood.prop_flood_prone = np.fmax(data_flood.prop_flood_prone, WBUS2_100yr.prop_flood_prone)
+            data_flood.flood_depth = np.maximum(data_flood.prop_flood_prone, param["depth_WBUS2_100yr"])
         
         formal_structure_damages = np.nansum(nb_households_formal * data_flood["prop_flood_prone"] * formal_structure_cost * depth_damage_function_structure(data_flood['flood_depth']))
         subsidized_structure_damages = np.nansum(nb_households_subsidized * data_flood["prop_flood_prone"] * param["subsidized_structure_value"] * depth_damage_function_structure(data_flood['flood_depth']))
