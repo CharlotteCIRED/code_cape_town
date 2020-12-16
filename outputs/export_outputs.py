@@ -28,7 +28,7 @@ def error_map(error, grid, export_name):
     plt.savefig(export_name)
     plt.close()
     
-def export_map(value, grid, export_name, lim):
+def export_map(value, grid):
     map = plt.scatter(grid.x, 
             grid.y, 
             s=None,
@@ -37,9 +37,9 @@ def export_map(value, grid, export_name, lim):
             marker='.')
     plt.colorbar(map)
     plt.axis('off')
-    plt.clim(0, lim)
-    plt.savefig(export_name)
-    plt.close()
+    #plt.clim(0, lim)
+    #plt.savefig(export_name)
+    #plt.close()
     
 # %% Validation
 
@@ -159,14 +159,15 @@ def export_density_rents_sizes(grid, name, data_rdp, housing_types_grid, initial
     export_map(initial_state_rent[3, :], grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/rents/class4_simul.png', 500)
     export_map(simul1_rent[0, 3, :], grid, 'C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/rents/class4_Basile1.png', 500)
 
-def validation_density(grid, initial_state_households_housing_types, name):
+def validation_density(grid, initial_state_households_housing_types, name, housing_types):
     
     #Population density
     xData = grid.dist
-    data = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/data.mat')['data']
-    nb_poor = data["gridNumberPoor"][0][0].squeeze()
-    nb_rich = data["gridNumberRich"][0][0].squeeze()
-    yData = (nb_poor + nb_rich) / 0.25
+    #data = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/data.mat')['data']
+    #nb_poor = data["gridNumberPoor"][0][0].squeeze()
+    #nb_rich = data["gridNumberRich"][0][0].squeeze()
+    #yData = (nb_poor + nb_rich) / 0.25
+    yData = (housing_types.informal_grid + housing_types.formal_grid + housing_types.backyard_informal_grid + housing_types.backyard_formal_grid) / 0.25
     ySimul = np.nansum(initial_state_households_housing_types, 0) / 0.25
 
     df = pd.DataFrame(data = np.transpose(np.array([xData, yData, ySimul])), columns = ["x", "yData", "ySimul"])
@@ -190,18 +191,19 @@ def validation_density(grid, initial_state_households_housing_types, name):
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density.png')  
     plt.close()
     
-def validation_density_housing_types(grid,initial_state_households_housing_types, housing_types_grid, name, absolute_number):
+def validation_density_housing_types(grid,initial_state_households_housing_types, housing_types, name, absolute_number):
 
     #Housing types
     xData = grid.dist
-    formal_data = (housing_types_grid.formal_grid_2011) / 0.25
-    backyard_data = (housing_types_grid.backyard_grid_2011) / 0.25
-    informal_data = (housing_types_grid.informal_grid_2011) / 0.25
+    formal_data = (housing_types.formal_grid) / 0.25
+    backyard_data = (housing_types.backyard_formal_grid + housing_types.backyard_informal_grid) / 0.25
+    informal_data = (housing_types.informal_grid) / 0.25
     formal_simul = (initial_state_households_housing_types[0, :] + initial_state_households_housing_types[3, :]) / 0.25
     informal_simul = (initial_state_households_housing_types[2, :]) / 0.25
     backyard_simul = (initial_state_households_housing_types[1, :]) / 0.25
 
-    #df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul, coeff_land[1, :]])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul", "informal_land"])
+    #df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul, coeff_land[2, :]])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul", "informal_land"])   
+    #df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul, pop_damages_50yr  / 0.25])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul", "pop_damages_20yr"])
     df = pd.DataFrame(data = np.transpose(np.array([xData, formal_data, backyard_data, informal_data, formal_simul, backyard_simul, informal_simul])), columns = ["xData", "formal_data", "backyard_data", "informal_data", "formal_simul", "backyard_simul", "informal_simul"])
     df["round"] = round(df.xData)
     new_df = df.groupby(['round']).mean()
@@ -223,18 +225,39 @@ def validation_density_housing_types(grid,initial_state_households_housing_types
     plt.figure(figsize=(10, 7))
     plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_data, color = "black", label = "Data")
     plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_simul, color = "green", label = "Simulation")
-    #plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_land * 300 / 0.009, color = "red", label = "Informal land")   
+    #plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_land * 300 / 0.009, color = "red", label = "Land prone to informal settlements (data)")   
+    #plt.plot(np.arange(max(df["round"] + 1)), new_df.pop_damages_20yr * 200, color = "red", label = "Pop flood prone 20yr")   
     axes = plt.axes()
-    axes.set_ylim([0, 400])
+    axes.set_ylim([0, 350])
     axes.set_xlim([0, 40])
     #plt.title("Informal")
     plt.xlabel("Distance to the city center (km)")
     plt.ylabel("Households density (per km2)")
     plt.legend()
     plt.tick_params(labelbottom=True)
-    plt.xticks([10.5, 13, 16, 18, 24, 25, 27, 30, 37, 39, 46.5], ["Joe Slovo", "Hout Bay", "Du Noon", "Philippi", "Khayelitsa" , "Wallacedene", "Khayelitsa", "Witsand", "Enkanini", "Pholile"], rotation ='vertical')
+    #plt.xticks([10.5, 13, 16, 18, 24, 25, 27, 30, 37, 39, 46.5], ["Joe Slovo", "Hout Bay", "Du Noon", "Philippi", "Khayelitsa" , "Wallacedene", "Khayelitsa", "Witsand", "Enkanini", "Pholile"], rotation ='vertical')
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_density_informal.png')  
     plt.close()
+    
+    #fig, ax1 = plt.subplots(figsize=(10, 7))
+    #ax1.plot(np.arange(max(df["round"] + 1)), new_df.informal_data, color = "black", label = "Data")
+    #ax1.plot(np.arange(max(df["round"] + 1)), new_df.informal_simul, color = "green", label = "Simulation")   
+    #ax1.tick_params(axis='y', labelcolor="black")
+    #ax1.set_ylim([0, 350])
+    #ax1.set_xlim([0, 40])
+    #ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    #ax2.spines['right'].set_visible(True)
+    #ax2.plot(np.arange(max(df["round"] + 1)), new_df.informal_land, color = "red", label = "Fraction of land prone to informal settlements (data)")
+    #ax2.tick_params(axis='y', labelcolor="red")
+    #ax2.set_ylim([0, 0.02])
+    #ax2.set_xlim([0, 40])
+    #fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    #ax1.set_xlabel("Distance to the city center (km)")
+    #ax1.set_ylabel("Households density (per km2)")
+    #ax1.legend(loc = "upper left")
+    #ax2.legend(loc = "upper right")
+    #ax1.tick_params(labelbottom=True)
+    #plt.show()
     
     plt.figure(figsize=(10, 7))
     plt.plot(np.arange(max(df["round"] + 1)), new_df.backyard_data, color = "black", label = "Data")

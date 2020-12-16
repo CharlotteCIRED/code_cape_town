@@ -108,7 +108,7 @@ def compare_damages(damages1, damages2, label1, label2, name):
     plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/flood_damages_backyard.png')  
     plt.close()
 
-def validation_flood(name, stats1, stats2, legend1, legend2):
+def validation_flood(name, stats1, stats2, legend1, legend2, type_flood):
    
     label = ["Formal private", "Formal subsidized", "Informal \n settlements", "Informal \n in backyards"]
     tshirt = [stats1.flood_depth_formal[2], stats1.flood_depth_subsidized[2], stats1.flood_depth_informal[2], stats1.flood_depth_backyard[2]]
@@ -129,6 +129,7 @@ def validation_flood(name, stats1, stats2, legend1, legend2):
     plt.bar(r + 0.25, np.array(formal_shirt2) - np.array(tshirtb2), bottom=np.array(tshirtb2), color=colors[3], edgecolor='white', width=barWidth)
     plt.legend()
     plt.xticks(r, label)
+    #plt.ylim(0, 1)
     plt.text(r[0] - 0.1, stats1.flood_depth_formal[5] + 0.01, legend1)
     plt.text(r[1] - 0.1, stats1.flood_depth_subsidized[5] + 0.01, legend1) 
     plt.text(r[2] - 0.1, stats1.flood_depth_informal[5] + 0.01, legend1) 
@@ -137,10 +138,10 @@ def validation_flood(name, stats1, stats2, legend1, legend2):
     plt.text(r[1] + 0.15, stats2.flood_depth_subsidized[5] + 0.01, legend2) 
     plt.text(r[2] + 0.15, stats2.flood_depth_informal[5] + 0.01, legend2) 
     plt.text(r[3] + 0.15, max(stats2.flood_depth_backyard[2], stats2.flood_depth_backyard[3], stats2.flood_depth_backyard[5]) + 0.01, legend2) 
-    plt.ylabel("Average flood depth (cm)")
+    plt.ylabel("Average flood depth (m)")
     plt.tick_params(labelbottom=True)
     plt.show()
-    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_flood_depth_withoutWBUS2.png')  
+    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_flood_depth_' + type_flood + '.png')  
     plt.close()
 
 
@@ -173,5 +174,145 @@ def validation_flood(name, stats1, stats2, legend1, legend2):
     plt.tick_params(labelbottom=True)
     plt.ylabel("Dwellings in flood-prone areas (%)")
     plt.show()
-    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_flood_proportion_withoutWBUS2.png')  
+    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/validation_flood_proportion_' + type_flood +'.png')  
     plt.close()
+    
+"""
+
+is_pockets = pd.read_excel('C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/IS_Pockets_w_Count/pocket_per_cell.xlsx').x
+is_pockets[np.isnan(is_pockets)] = 0
+
+
+housing_types_grid_sal[np.isnan(housing_types_grid_sal)] = 0
+
+#housing_types_grid_fromsubplace.formal_grid_2011 = housing_types_grid_fromsubplace.formal_grid_2011 * (sum(housing_types_grid_sal.formal_grid) / sum(housing_types_grid_fromsubplace.formal_grid_2011))
+
+xData = grid.dist
+formal_subplace = (housing_types_grid_fromsubplace.formal_grid_2011) / 0.25
+backyard_subplace = (housing_types_grid_fromsubplace.backyard_grid_2011) / 0.25
+informal_subplace = (housing_types_grid_fromsubplace.informal_grid_2011) / 0.25
+informal_smallarea = (housing_types_grid_sal.informal_grid) / 0.25
+backyard_smallarea = (housing_types_grid_sal.backyard_formal_grid + housing_types_grid_sal.backyard_informal_grid) / 0.25
+formal_smallarea = (housing_types_grid_sal.formal_grid) / 0.25
+remote_sensing = is_pockets / 0.25
+
+df = pd.DataFrame(data = np.transpose(np.array([xData, formal_subplace, backyard_subplace, informal_subplace, formal_smallarea, backyard_smallarea, informal_smallarea, remote_sensing])), columns = ["xData", "formal_subplace", "backyard_subplace", "informal_subplace", "formal_smallarea", "backyard_smallarea", "informal_smallarea", "remote_sensing"])
+df["round"] = round(df.xData)
+new_df = df.groupby(['round']).mean()
+    
+plt.figure(figsize=(10, 7))
+plt.plot(np.arange(max(df["round"] + 1)), new_df.formal_subplace, color = "black", label = "Subplace")
+plt.plot(np.arange(max(df["round"] + 1)), new_df.formal_smallarea, color = "green", label = "Small area")
+axes = plt.axes()
+axes.set_ylim([0, 1600])
+axes.set_xlim([0, 40])
+#plt.title("Formal")
+plt.legend()
+plt.tick_params(labelbottom=True)
+plt.xlabel("Distance to the city center (km)")
+plt.ylabel("Households density (per km2)")
+
+plt.figure(figsize=(10, 7))
+plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_subplace, color = "black", label = "Subplace")
+plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_smallarea, color = "green", label = "Small area")
+plt.plot(np.arange(max(df["round"] + 1)), new_df.remote_sensing, color = "red", label = "Remote sensing")
+axes = plt.axes()
+axes.set_ylim([0, 350])
+axes.set_xlim([0, 40])
+plt.xlabel("Distance to the city center (km)")
+plt.ylabel("Households density (per km2)")
+plt.legend()
+plt.tick_params(labelbottom=True)
+
+    
+plt.figure(figsize=(10, 7))
+plt.plot(np.arange(max(df["round"] + 1)), new_df.backyard_subplace, color = "black", label = "Subplace")
+plt.plot(np.arange(max(df["round"] + 1)), new_df.backyard_smallarea, color = "green", label = "Small area")
+axes = plt.axes()
+axes.set_ylim([0, 450])
+axes.set_xlim([0, 40])
+#plt.title("Backyard")
+plt.legend()
+plt.tick_params(labelbottom=True)
+plt.xlabel("Distance to the city center (km)")
+plt.ylabel("Households density (per km2)")
+
+
+
+
+housing_types_grid_sal[np.isnan(housing_types_grid_sal)] = 0
+
+xData = grid.dist
+formal_backyard = (housing_types_grid_sal.backyard_formal_grid) / 0.25
+informal_backyard = (housing_types_grid_sal.backyard_informal_grid) / 0.25
+
+
+df = pd.DataFrame(data = np.transpose(np.array([xData, formal_backyard, informal_backyard])), columns = ["xData", "formal_backyard", "informal_backyard"])
+df["round"] = round(df.xData)
+new_df = df.groupby(['round']).mean()
+
+plt.figure(figsize=(10, 7))
+plt.plot(np.arange(max(df["round"] + 1)), new_df.formal_backyard, color = "black", label = "Backyard (bricks)")
+plt.plot(np.arange(max(df["round"] + 1)), new_df.informal_backyard, color = "green", label = "Backyard (others)")
+axes = plt.axes()
+#axes.set_ylim([0, 450])
+axes.set_xlim([0, 40])
+#plt.title("Backyard")
+plt.legend()
+plt.tick_params(labelbottom=True)
+plt.xlabel("Distance to the city center (km)")
+plt.ylabel("Households density (per km2)")
+
+floods = ['FD_5yr', 'FD_10yr', 'FD_20yr', 'FD_50yr', 'FD_75yr', 'FD_100yr', 'FD_200yr', 'FD_250yr', 'FD_500yr', 'FD_1000yr']
+path_data = "C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/FATHOM/"
+
+
+stats_per_housing_type = pd.DataFrame(columns = ['flood',
+                                                     'formal_backyard_prop', 'informal_backyard_prop',
+                                                     'flood_depth_formal_backyard', 'flood_depth_informal_backyard'])
+for flood in floods:
+    type_flood = copy.deepcopy(flood)
+    flood = np.squeeze(pd.read_excel(path_data + flood + ".xlsx"))
+       
+    stats_per_housing_type = stats_per_housing_type.append({'flood': type_flood, 
+                                                            'formal_backyard_prop': np.sum(flood['prop_flood_prone'] * housing_types_grid_sal.backyard_formal_grid) / sum(housing_types_grid_sal.backyard_formal_grid), 
+                                                            'informal_backyard_prop': np.sum(flood['prop_flood_prone'] * housing_types_grid_sal.backyard_informal_grid) / sum(housing_types_grid_sal.backyard_informal_grid),
+                                                            'flood_depth_formal_backyard': sum(flood['flood_depth'] * (flood['prop_flood_prone'] * housing_types_grid_sal.backyard_formal_grid)  / sum(flood['prop_flood_prone'] * housing_types_grid_sal.backyard_formal_grid)),
+                                                            'flood_depth_informal_backyard': sum(flood['flood_depth'] * (flood['prop_flood_prone'] * housing_types_grid_sal.backyard_informal_grid)  / sum(flood['prop_flood_prone'] * housing_types_grid_sal.backyard_informal_grid))}, ignore_index = True) 
+    
+label = ["Backyard (bricks)", "Backyard (others)"]
+tshirt = [stats_per_housing_type.flood_depth_formal_backyard[2], stats_per_housing_type.flood_depth_informal_backyard[2]]
+tshirtb = [stats_per_housing_type.flood_depth_formal_backyard[3], stats_per_housing_type.flood_depth_informal_backyard[3]]
+formal_shirt = [stats_per_housing_type.flood_depth_formal_backyard[5], stats_per_housing_type.flood_depth_informal_backyard[5]]
+colors = ['#FF9999', '#00BFFF','#C1FFC1','#CAE1FF','#FFDEAD']
+r = np.array([0, 0.5])
+barWidth = 0.25
+plt.figure(figsize=(10,7))
+plt.bar(r, np.array(tshirt), color=colors[1], edgecolor='white', width=barWidth, label='20 years')
+plt.bar(r, np.array(tshirtb) - (np.array(tshirt)), bottom=(np.array(tshirt)), color=colors[2], edgecolor='white', width=barWidth, label='50 years')
+plt.bar(r, np.array(formal_shirt) - (np.array(tshirtb)), bottom=(np.array(tshirtb)), color=colors[3], edgecolor='white', width=barWidth, label='100 years')
+plt.legend()
+plt.xticks(r, label)
+plt.ylim(0, 0.2)
+plt.ylabel("Average flood depth (m)")
+plt.tick_params(labelbottom=True)
+plt.show()
+
+
+jeans = [stats_per_housing_type.formal_backyard_prop[2], stats_per_housing_type.informal_backyard_prop[2]]
+tshirt = [stats_per_housing_type.formal_backyard_prop[3], stats_per_housing_type.informal_backyard_prop[3]]
+formal_shirt = [stats_per_housing_type.formal_backyard_prop[5], stats_per_housing_type.informal_backyard_prop[5]]
+colors = ['#FF9999', '#00BFFF','#C1FFC1','#CAE1FF','#FFDEAD']
+r = np.array([0, 0.5])
+barWidth = 0.25
+plt.figure(figsize=(10,7))
+plt.bar(r, jeans, color=colors[0], edgecolor='white', width=barWidth, label="20 years")
+plt.bar(r, np.array(tshirt) - np.array(jeans), bottom=np.array(jeans), color=colors[1], edgecolor='white', width=barWidth, label='50 years')
+plt.bar(r, np.array(formal_shirt) - (np.array(tshirt)), bottom=(np.array(tshirt)), color=colors[2], edgecolor='white', width=barWidth, label='100 years')
+plt.legend()
+plt.xticks(r, label)
+plt.tick_params(labelbottom=True)
+plt.ylabel("Dwellings in flood-prone areas (%)")
+plt.show()
+
+"""

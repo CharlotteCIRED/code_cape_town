@@ -15,6 +15,7 @@ def import_options():
     options["import_precalculated_parameters"] = 1 #Do we do the calibration again?
     options["load_households_data"] = 0
     options["agents_anticipate_floods"] = 1
+    options["WBUS2"] = 0
     return options
 
 def import_param(options):
@@ -30,8 +31,8 @@ def import_param(options):
         param["coeff_b"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedHousing_b.mat')["coeff_b"].squeeze()
         param["coeff_A"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedHousing_kappa.mat')["coeffKappa"].squeeze()
         param["coeff_a"] = 1 - param["coeff_b"]
-        param["amenity_backyard"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedParamAmenities.mat')["calibratedParamAmenities"][0].squeeze()
-        param["amenity_settlement"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedParamAmenities.mat')["calibratedParamAmenities"][1].squeeze()
+        #param["amenity_backyard"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedParamAmenities.mat')["calibratedParamAmenities"][0].squeeze()
+        #param["amenity_settlement"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/calibratedParamAmenities.mat')["calibratedParamAmenities"][1].squeeze()
         param["lambda"] = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/lambda.mat')["lambdaKeep"].squeeze()
     
     param["depreciation_rate"] = 0.025
@@ -39,7 +40,7 @@ def import_param(options):
     param["shack_size"] = 14 #Size of a backyard shack (m2)
     param["RDP_size"] = 40 #Size of a RDP house (m2)
     param["backyard_size"] = 70 #size of the backyard of a RDP house (m2)
-    param["future_rate_public_housing"] = 5000
+    param["future_rate_public_housing"] = 1000 #0 #1000
     param["informal_structure_value"] = 4000
     param["fraction_z_dwellings"] = 0.49
     param["subsidized_structure_value"] = 150000
@@ -71,19 +72,13 @@ def import_param(options):
     param["time_cost"] = 1
     
     #Solver
-    param["max_iter"] = 500
+    param["max_iter"] = 5000
     param["precision"] = 0.01
     
     #Dynamic
     param["time_invest_housing"] = 3
     param["time_depreciation_buildings"] = 100
     param["iter_calc_lite"] = 1
-    
-    #WBUS2
-    param["depth_WBUS2_20yr"] = 0.2
-    param["depth_WBUS2_50yr"] = 0.4
-    param["depth_WBUS2_100yr"] = 0.7
-    
     
     return param
 

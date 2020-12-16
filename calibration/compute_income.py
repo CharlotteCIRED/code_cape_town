@@ -18,7 +18,7 @@ import os
 import math
 from sklearn.linear_model import LinearRegression
 
-from compute_income import *
+from calibration.compute_income import *
 
 def EstimateIncome(param, timeOutput, distanceOutput, monetaryCost, costTime, job_centers, average_income, income_distribution, list_lambda):
     #Solve for income per employment centers for different values of lambda
@@ -68,6 +68,7 @@ def EstimateIncome(param, timeOutput, distanceOutput, monetaryCost, costTime, jo
             popResidence = income_distribution[:, j] * sum(job_centers[whichJobsCenters, j]) / sum(income_distribution[:, j])
            
             funSolve = lambda incomeCentersTemp: fun0(incomeCentersTemp, averageIncomeGroup, popCenters, popResidence, monetary_cost[whichJobsCenters,:,:] * householdSize, timeCost[whichJobsCenters,:,:] * householdSize, param_lambda)
+            #funSolve = lambda incomeCentersTemp: fun0(incomeCentersTemp, averageIncomeGroup, popCenters, popResidence, monetary_cost[whichJobsCenters,:,:] * householdSize, timeCost[whichJobsCenters,:,:], param_lambda)
 
             maxIter = 200
             tolerance = 0.001

@@ -15,11 +15,11 @@ from data import *
 #Import Scenarios
 spline_agricultural_rent, spline_interest_rate, spline_RDP, spline_population_income_distribution, spline_inflation, spline_income_distribution, spline_population, spline_interest_rate, spline_income, spline_minimum_housing_supply, spline_fuel = import_scenarios(income_2011, param, grid)
 
-for t_temp in np.arange(0, 30):
+for t_temp in np.arange(0, 1):
     print(t_temp)
     incomeNetOfCommuting, modalShares, ODflows, averageIncome = import_transport_data(grid, param, t_temp, spline_inflation, spline_fuel)
-    np.save("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/year_" + str(t_temp), incomeNetOfCommuting)
-    np.save("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/average_income_year_" + str(t_temp), averageIncome)
+    np.save("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/SP_year_" + str(t_temp), incomeNetOfCommuting)
+    #np.save("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/average_income_year_" + str(t_temp)  + 'test', averageIncome)
 
 
 def import_transport_data(grid, param, yearTraffic, spline_inflation, spline_fuel):
@@ -28,7 +28,7 @@ def import_transport_data(grid, param, yearTraffic, spline_inflation, spline_fue
         #### STEP 1: IMPORT TRAVEL TIMES AND COSTS
 
         # Import travel times and distances
-        transport_times = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Basile data/Transport_times_GRID.mat')
+        transport_times = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/Basile data/Transport_times_SP.mat')
              
         #Price per km
         priceTrainPerKMMonth = 0.164 * spline_inflation(2011 - param["baseline_year"]) / spline_inflation(2013 - param["baseline_year"])
@@ -117,9 +117,9 @@ def import_transport_data(grid, param, yearTraffic, spline_inflation, spline_fue
         param_lambda = param["lambda"].squeeze()
 
         incomeNetOfCommuting = np.zeros((param["nb_of_income_classes"], transport_times["durationCar"].shape[1]))
-        averageIncome = np.zeros((param["nb_of_income_classes"], len(grid.dist)))
-        modalShares = np.zeros((185, len(grid.dist), 5, param["nb_of_income_classes"]))
-        ODflows = np.zeros((185, len(grid.dist), param["nb_of_income_classes"]))
+        averageIncome = np.zeros((param["nb_of_income_classes"], transport_times["durationCar"].shape[1]))
+        modalShares = np.zeros((185, transport_times["durationCar"].shape[1], 5, param["nb_of_income_classes"]))
+        ODflows = np.zeros((185, transport_times["durationCar"].shape[1], param["nb_of_income_classes"]))
        
         #income
         incomeGroup, households_per_income_class = compute_average_income(spline_population_income_distribution, spline_income_distribution, param, yearTraffic)
@@ -136,7 +136,19 @@ def import_transport_data(grid, param, yearTraffic, spline_inflation, spline_fue
         
         xInterp = grid.x
         yInterp = grid.y
-            
+        
+        #if changes
+        #monetaryCost[:, (grid.dist < 15) & (grid.dist > 10), :] = monetaryCost[:, (grid.dist < 15) & (grid.dist > 10), :] * 1.2
+        #monetaryCost[:, (grid.dist < 30) & (grid.dist > 22), :] = monetaryCost[:, (grid.dist < 30) & (grid.dist > 22), :] * 0.7
+        #costTime[:, (grid.dist < 15) & (grid.dist > 10), :] = costTime[:, (grid.dist < 15) & (grid.dist > 10), :] * 1.2
+        #costTime[:, (grid.dist < 30) & (grid.dist > 22), :] = costTime[:, (grid.dist < 30) & (grid.dist > 22), :] * 0.7
+        #monetaryCost[:, (grid.dist < 25) & (grid.dist > 22), :] = monetaryCost[:, (grid.dist < 25) & (grid.dist > 22), :] * 0.8
+        #costTime[:, (grid.dist < 25) & (grid.dist > 22), :] = costTime[:, (grid.dist < 25) & (grid.dist > 22), :] * 0.8
+        #monetaryCost[:, (grid.dist < 11) & (grid.dist > 8), :] = monetaryCost[:, (grid.dist < 11) & (grid.dist > 8), :] * 0.8
+        #costTime[:, (grid.dist < 11) & (grid.dist > 8), :] = costTime[:, (grid.dist < 11) & (grid.dist > 8), :] * 0.8
+        #monetaryCost[:, (grid.dist < 22) & (grid.dist > 14), :] = monetaryCost[:, (grid.dist < 22) & (grid.dist > 14), :] * 0.8
+        #costTime[:, (grid.dist < 22) & (grid.dist > 14), :] = costTime[:, (grid.dist < 22) & (grid.dist > 14), :] * 0.8
+        
         for j in range(0, param["nb_of_income_classes"]):
                     
             #Household size varies with transport costs

@@ -22,7 +22,7 @@ def EstimateParametersByScanning(incomeNetOfCommuting, dataRent, dataDwellingSiz
 
     #Data as matrices, where should we regress (remove where we have no data)
     #Where is which class
-    net_income = income_net_of_commuting_costs[1:4,:] #We remove income group 1
+    net_income = incomeNetOfCommuting[1:4,:] #We remove income group 1
     groupLivingSpMatrix = (net_income > 0)
     for i in range(0, 3):
         groupLivingSpMatrix[i, data_income_group != i] = np.zeros(1, 'bool')
@@ -68,7 +68,9 @@ def EstimateParametersByScanning(incomeNetOfCommuting, dataRent, dataDwellingSiz
     iterPrint = np.floor(np.ones(combinationInputs.shape[0]) / 20)
     print('\nDone: ')
     for index in range(0, combinationInputs.shape[0]):
-        scoreTotal[index], scoreAmenities[index], scoreDwellingSize[index], scoreIncomeSorting[index], scoreHousing[index], parametersAmenities, modelAmenities, parametersHousing = LogLikelihoodModel(combinationInputs[:, index], Uo2, net_income, groupLivingSpMatrix, data_sp, selectedDwellingSize, dataRent, selectedRents, selectedDensity, predictorsAmenitiesMatrix, tableRegression, variables_regression, CalculateDwellingSize, ComputeLogLikelihood, optionRegression)
+        print(index)
+        #scoreTotal[index], scoreAmenities[index], scoreDwellingSize[index], scoreIncomeSorting[index], scoreHousing[index], parametersAmenities, modelAmenities, parametersHousing = LogLikelihoodModel(combinationInputs[:, index], Uo2, net_income, groupLivingSpMatrix, data_sp, selectedDwellingSize, dataRent, selectedRents, selectedDensity, predictorsAmenitiesMatrix, tableRegression, variables_regression, CalculateDwellingSize, ComputeLogLikelihood, optionRegression)
+        scoreTotal[index], scoreAmenities[index], scoreDwellingSize[index], scoreIncomeSorting[index], scoreHousing[index], parametersAmenities, modelAmenities, parametersHousing = LogLikelihoodModel(combinationInputs[index, :], Uo2, net_income, groupLivingSpMatrix, data_sp, selectedDwellingSize, dataRent, selectedRents, selectedDensity, predictorsAmenitiesMatrix, tableRegression, variables_regression, CalculateDwellingSize, ComputeLogLikelihood, optionRegression)
         #if (floor(index / iterPrint) == index/iterPrint):
          #   fprintf('%0.f%%  ', round(index / size(combinationInputs,2) .* 100));
 

@@ -14,16 +14,17 @@ import numpy.matlib
 from sklearn.linear_model import LinearRegression
 import copy
 
-from data import *
-from parameters_and_options import *
-from compute_equilibrium import *
-from export_outputs import *
-from export_outputs_floods import *
-from flood_outputs import *
-from functions_dynamic import *
-from run_simulations import *
-from calibration_construction_function import *
-from compute_income import *
+from inputs.data import *
+from inputs.parameters_and_options import *
+from equilibrium.compute_equilibrium import *
+from outputs.export_outputs import *
+from outputs.export_outputs_floods import *
+from outputs.flood_outputs import *
+from equilibrium.functions_dynamic import *
+from equilibrium.run_simulations import *
+from calibration.calibration import *
+from calibration.compute_income import *
+from inputs.WBUS2_depth import *
 
 # %% Import parameters and options
 
@@ -36,12 +37,8 @@ param = import_param(options)
 t = np.arange(0, 1)
 
 #OPTIONS FOR THIS SIMULATION
-
-options["agents_anticipate_floods"] = 1
-options["agri_rent"] = "low"
 options["coeff_land"] = 'old'
-param["subsidized_structure_value"] = 150000
-param["fraction_z_dwellings"] = 0.49
+options["WBUS2"] = 1
 
 # %% Load data
 
@@ -59,7 +56,7 @@ income_2011 = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/B
 mean_income = np.sum(income_2011.Households_nb * income_2011.INC_med) / sum(income_2011.Households_nb)
 households_per_income_class, average_income = import_income_classes_data(param, income_2011)
 income_mult = average_income / mean_income
-income_net_of_commuting_costs = np.load("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport_v2/SP_year_0.npy")
+income_net_of_commuting_costs = np.load("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/SP_year_0.npy")
 param["income_year_reference"] = mean_income
 data_rdp, housing_types_sp, housing_types_grid, data_sp, mitchells_plain_grid_2011, grid_formal_density_HFA, threshold_income_distribution, income_distribution, cape_town_limits = import_households_data(options)
 
@@ -75,20 +72,22 @@ coeff_land = import_coeff_land(spline_land_constraints, spline_land_backyard, in
 housing_limit = import_housig_limit(grid, param)
 param = import_construction_parameters(param, grid, housing_types_sp, data_sp["dwelling_size"], mitchells_plain_grid_2011, grid_formal_density_HFA, coeff_land)
 minimum_housing_supply = param["minimum_housing_supply"]
-if options["agri_rent"] == "low":
-    agricultural_rent = param["agricultural_rent_2011"] ** (param["coeff_a"]) * (param["depreciation_rate"] + interest_rate) / (param["coeff_A"] * param["coeff_b"] ** param["coeff_b"])
-elif options["agri_rent"] == "high":
-    agricultural_rent = param["agricultural_rent_2011"]
+agricultural_rent = param["agricultural_rent_2011"] ** (param["coeff_a"]) * (param["depreciation_rate"] + interest_rate) / (param["coeff_A"] * param["coeff_b"] ** param["coeff_b"])
 
 #FLOOD DATA
+param = infer_WBUS2_depth(housing_types_grid, param)
 if options["agents_anticipate_floods"] == 1:
-    fraction_capital_destroyed, depth_damage_function_structure, depth_damage_function_contents = import_floods_data()
+    fraction_capital_destroyed, depth_damage_function_structure, depth_damage_function_contents = import_floods_data(options, param)
 elif options["agents_anticipate_floods"] == 0:
     fraction_capital_destroyed = pd.DataFrame()
     fraction_capital_destroyed["structure"] = np.zeros(24014)
     fraction_capital_destroyed["contents"] = np.zeros(24014)
     
 # %% Estimation of coefficient of construction function
+
+data_income_group = np.zeros(len(data_sp["income"]))
+for j in range(0, 3):
+    data_income_group[data_sp["income"] > threshold_income_distribution[j]] = j+1
 
 #Import amenities at the SP level
 amenities_sp = import_amenities_SP()
@@ -127,7 +126,7 @@ coeffKappa = (1 /coeff_b ** coeff_b) * np.exp(model_construction.intercept_)
 
 #listLambda = [4.027, 0]
 #list_lambda = 10 ** np.arange(0.6, 0.65, 0.01)
-list_lambda = 10 ** np.arange(0.6, 0.61, 0.005)
+list_lambda = 10 ** np.arange(0.6, 0.605, 0.005)
 
 timeOutput, distanceOutput, monetaryCost, costTime = import_transport_costs(income_2011, param, grid)
 job_centers = import_employment_data(households_per_income_class, param)
@@ -146,9 +145,10 @@ lambdaKeep = list_lambda[whichLambda]
 #timeDistributionKeep = timeDistribution[:, whichLambda]
 distanceDistributionKeep = distanceDistribution[:, whichLambda]
 incomeCentersKeep = incomeCenters[:,:,whichLambda]
-
-#incomeNetOfCommuting = ComputeIncomeNetOfCommuting(param, grid, job, households_data, lambdaKeep, incomeCentersKeep, timeOutput, distanceOutput, monetaryCost, costTime)
-#On peut faire un graphe de contrôle ici.
+sns.distplot(np.abs(((incomeCentersKeep - scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/incomeCentersKeep.mat')['incomeCentersKeep']) /scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/incomeCentersKeep.mat')['incomeCentersKeep']) * 100))
+#incomeCentersKeep = scipy.io.loadmat('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/projet_le_cap/0. Precalculated inputs/incomeCentersKeep.mat')['incomeCentersKeep']
+#lamdaKepp = 10 ** 0.605
+incomeNetOfCommuting = np.load("C:/Users/Charlotte Liotta/Desktop/cape_town/2. Data/precalculated_transport/SP_year_0.npy")
 
 # %% Calibration utility function
 
@@ -167,9 +167,7 @@ listUti3 = utilityTarget[2] * listVariation
 listUti4 = utilityTarget[3] * listVariation
 
 dataRent = data_sp["price"] ** (coeff_a) * (param["depreciation_rate"] + interpolate_interest_rate(spline_interest_rate, 0)) / (coeffKappa * coeff_b ** coeff_b)
-data_income_group = np.zeros(len(data_sp["income"]))
-for j in range(0, 3):
-    data_income_group[data_sp["income"] > threshold_income_distribution[j]] = j+1
+
 
 
 [parametersScan, scoreScan, parametersAmenitiesScan, modelAmenityScan, parametersHousing, ~] = ...
@@ -317,10 +315,11 @@ def import_transport_costs(income_2011, param, grid):
         trans_monetaryCost = np.zeros((185, timeOutput.shape[1], 5))
         for index2 in range(0, 5):
             monetaryCost[:,:,index2] = pricePerKM[index2] * multiplierPrice[:,:,index2]
-            monetaryCost[:,:,1] = monetaryCost[:,:,1] + priceTrainFixedMonth * 12 #train (monthly fare)
-            monetaryCost[:,:,2] = monetaryCost[:,:,2] + priceFixedVehiculeMonth * 12 #private car
-            monetaryCost[:,:,3] = monetaryCost[:,:,3] + priceTaxiFixedMonth * 12 #minibus-taxi
-            monetaryCost[:,:,4] = monetaryCost[:,:,4] + priceBusFixedMonth * 12 #bus
+            
+        monetaryCost[:,:,1] = monetaryCost[:,:,1] + priceTrainFixedMonth * 12 #train (monthly fare)
+        monetaryCost[:,:,2] = monetaryCost[:,:,2] + priceFixedVehiculeMonth * 12 #private car
+        monetaryCost[:,:,3] = monetaryCost[:,:,3] + priceTaxiFixedMonth * 12 #minibus-taxi
+        monetaryCost[:,:,4] = monetaryCost[:,:,4] + priceBusFixedMonth * 12 #bus
         trans_monetaryCost = copy.deepcopy(monetaryCost)
     
         #### STEP 3: COMPUTE PROBA TO WORK IN C, EXPECTED INCOME AND EXPECTED NB OF
@@ -339,7 +338,7 @@ def import_employment_data(households_per_income_class, param):
 
     #Number of employees in each TZ for the 12 income classes
     jobsCenters12Class = np.array([np.zeros(len(TAZ.Ink1)), TAZ.Ink1/3, TAZ.Ink1/3, TAZ.Ink1/3, TAZ.Ink2/2, TAZ.Ink2/2, TAZ.Ink3/3, TAZ.Ink3/3, TAZ.Ink3/3, TAZ.Ink4/3, TAZ.Ink4/3, TAZ.Ink4/3])
-        
+     
     codeCentersInitial = TAZ.TZ2013
     xCoord = TAZ.X / 1000
     yCoord = TAZ.Y / 1000

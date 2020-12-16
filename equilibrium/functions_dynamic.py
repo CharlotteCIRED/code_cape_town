@@ -14,7 +14,7 @@ def import_scenarios(income_2011, param, grid):
 
     #Import Scenarios
     scenario_income_distribution = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_inc_distrib_2.csv', sep = ';')
-    scenario_population = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_pop_2.csv', sep = ';')
+    scenario_population = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_pop_20201209.csv', sep = ';')
     scenario_inflation = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_inflation_1.csv', sep = ';')
     scenario_interest_rate = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_interest_rate_1.csv', sep = ';')
     scenario_price_fuel = pd.read_csv('C:/Users/Charlotte Liotta/Desktop/Cape Town - pour Charlotte/Modèle/data_Cape_Town/Scenarios/Scenario_price_fuel_1.csv', sep = ';')

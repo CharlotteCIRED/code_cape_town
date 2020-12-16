@@ -11,7 +11,9 @@ from scipy.interpolate import interp2d
 
 def LogLikelihoodModel(X0, Uo2, net_income, groupLivingSpMatrix, data_sp, selectedDwellingSize, dataRent, selectedRents, selectedDensity, predictorsAmenitiesMatrix, tableRegression, variables_regression, CalculateDwellingSize, ComputeLogLikelihood, optionRegression):
     """ Function to estimate the total likelihood of the model given the parameters """
-
+    
+    #X0 = np.array([0.25332341, 3.97137219, 3300, 11000])
+    #Uo2 = 1000
     beta = X0[0]
     basicQ = X0[1]
     Uo = np.array([Uo2, X0[2], X0[3]])
@@ -82,9 +84,8 @@ def LogLikelihoodModel(X0, Uo2, net_income, groupLivingSpMatrix, data_sp, select
     scoreHousing = 0
     parametersHousing = 0
     
-    #return scoreTotal, scoreAmenities, scoreDwellingSize, scoreIncomeSorting, scoreHousing, parametersAmenities, modelAmenities, parametersHousing
-    return scoreTotal
-
+    return scoreTotal, scoreAmenities, scoreDwellingSize, scoreIncomeSorting, scoreHousing, parametersAmenities, modelAmenities, parametersHousing
+    
 def utilityFromRents(Ro, income, basic_q, beta):
     utility = ((1 - beta) ** (1 - beta)) * (beta ** beta) * (income - (basic_q * Ro)) / (Ro ** beta)
     utility[(income - (basic_q * Ro)) < 0] = 0

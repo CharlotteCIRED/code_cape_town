@@ -139,13 +139,13 @@ def plot_annualize_damages_per_hh(type_housing, name, nb_hh, households):
         total[:, 2] = (total[:, 2] / real_income) * 100
     
     #total = total[total[:, 0] > 1, :] #A affiner pour ne prendre que ceux qui sont dans une zone inondable 100yr
-    array_percentile = weighted_percentile(total[: ,0], total[:, 3], np.arange(0, 1, 0.25))
+    array_percentile = weighted_percentile(total[: ,0], total[:, 3], np.arange(0, 1, 0.1))
 
     total = pd.DataFrame(total)
     total["quantile"] = "Q0"
     for i in range(1, len(array_percentile)):
-        total["quantile"][(total.loc[:,0] < array_percentile[i]) & (total.loc[: ,0] >= array_percentile[i - 1])] = "Q" + str(i)
-    total["quantile"][(total.loc[: ,0] >= array_percentile[3])] = "Q4"
+        total["quantile"][(total.loc[:,0] <= array_percentile[i]) & (total.loc[: ,0] > array_percentile[i - 1])] = "Q" + str(i)
+    total["quantile"][(total.loc[: ,0] > array_percentile[9])] = "Q10"
     total = total.loc[~np.isnan(total.loc[: ,0]), :]
     total = total.loc[total["quantile"] != "Q0", :]
     total = pd.DataFrame(total)
@@ -153,11 +153,14 @@ def plot_annualize_damages_per_hh(type_housing, name, nb_hh, households):
     structure_damages = total.groupby('quantile').apply(lambda total: np.average(total.loc[~np.isnan(total.loc[:, 0]) ,1], weights=total.loc[~np.isnan(total.loc[: ,0]) ,3]))
     contents_damages = total.groupby('quantile').apply(lambda total: np.average(total.loc[~np.isnan(total.loc[:, 0]) ,2], weights=total.loc[~np.isnan(total.loc[: ,0]) ,3]))
     hh_per_quantile = total.groupby('quantile').sum()
+    #total_damages['Q9'] = total_damages['Q8']
+    #contents_damages['Q9'] = contents_damages['Q8']
+    #structure_damages['Q9'] = structure_damages['Q8']
     
-    order = ['Q1', 'Q2', 'Q3','Q4'] #,'Q5','Q6','Q7','Q8','Q9','Q10']
+    order = ['Q1', 'Q2', 'Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10']
     colors = ['#FF9999', '#00BFFF','#C1FFC1','#CAE1FF','#FFDEAD']
-    r = np.arange(4)
-    barWidth = 0.25
+    r = np.arange(10)
+    barWidth = 0.80
     plt.figure(figsize=(10,7))
     plt.bar(r, np.array(pd.DataFrame(structure_damages).loc[order]).squeeze(), color=colors[0], edgecolor='white', width=barWidth, label="Structure")
     plt.bar(r, np.array(pd.DataFrame(contents_damages).loc[order]).squeeze(), bottom=np.array(pd.DataFrame(structure_damages).loc[order]).squeeze(), color=colors[1], edgecolor='white', width=barWidth, label='Contents')
@@ -166,20 +169,23 @@ def plot_annualize_damages_per_hh(type_housing, name, nb_hh, households):
     plt.xticks(r, order)
     #plt.title(str(int(sum(total.loc[: ,3]))) + ' households \n ' + str(int(100 * sum(total.loc[: ,3])/sum(nb_hh))) + '% of households in ' + type_housing + ' housing')
     plt.title(str(int(sum(total.loc[: ,3]))) + ' households')
-    #plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_per_hh_' + type_housing + '_' + option + '.png')  
-    #plt.close()
+    plt.ylabel('Annualized damages as a fraction of income (%)')
+    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/annualized_damages_per_hh_' + type_housing + '_Q10.png')  
+    plt.close()
 
 #2. Option 2: on veut les dégâts par return period
 
 damages_100yr = pd.read_excel('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_' + 'FD_100yr' + '.xlsx')  
+damages_20yr = pd.read_excel('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_' + 'FD_20yr' + '.xlsx')  
+damages_50yr = pd.read_excel('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_' + 'FD_50yr' + '.xlsx')  
 
-plot_damages_per_hh('formal', name, df_prop_flood_prone, initial_state_households_housing_types[0, :], initial_state_households[0,:,:], damages_100yr)
-plot_damages_per_hh('backyard', name, df_prop_flood_prone, initial_state_households_housing_types[1, :], initial_state_households[1,:,:], damages_100yr)
-plot_damages_per_hh('informal', name, df_prop_flood_prone, initial_state_households_housing_types[2, :], initial_state_households[2,:,:], damages_100yr)
-plot_damages_per_hh('subsidized', name, df_prop_flood_prone, initial_state_households_housing_types[3, :], initial_state_households[3,:,:], damages_100yr)
+plot_damages_per_hh('formal', name, initial_state_households_housing_types[0, :], initial_state_households[0,:,:], damages_50yr)
+plot_damages_per_hh('backyard', name, initial_state_households_housing_types[1, :], initial_state_households[1,:,:], damages_50yr)
+plot_damages_per_hh('informal', name, initial_state_households_housing_types[2, :], initial_state_households[2,:,:], damages_50yr)
+plot_damages_per_hh('subsidized', name, initial_state_households_housing_types[3, :], initial_state_households[3,:,:], damages_50yr)
 
 
-def plot_damages_per_hh(type_housing, name, df_prop_flood_prone, nb_hh, households, damages):
+def plot_damages_per_hh(type_housing, name, nb_hh, households, damages):
 
     df_pop_flood_prone = copy.deepcopy(damages.prop_flood_prone) * nb_hh
 
@@ -202,7 +208,7 @@ def plot_damages_per_hh(type_housing, name, df_prop_flood_prone, nb_hh, househol
         total[:, 2] = (total[:, 2] / real_income) * 100
     
     #total = total[total[:, 0] > 1, :] #A affiner pour ne prendre que ceux qui sont dans une zone inondable 100yr
-    array_percentile = weighted_percentile(total[: ,0], total[: ,3], np.arange(0, 1, 0.25))
+    array_percentile = weighted_percentile(total[total[: ,3] != 0 ,0], total[total[: ,3] != 0 ,3], np.arange(0, 1, 0.25))
 
     total = pd.DataFrame(total)
     total["quantile"] = "Q0"
@@ -216,23 +222,27 @@ def plot_damages_per_hh(type_housing, name, df_prop_flood_prone, nb_hh, househol
     structure_damages = total.groupby('quantile').apply(lambda total: np.average(total.loc[~np.isnan(total.loc[: ,0]) ,1], weights=total.loc[~np.isnan(total.loc[: ,0]) ,3]))
     contents_damages = total.groupby('quantile').apply(lambda total: np.average(total.loc[~np.isnan(total.loc[: ,0]) ,2], weights=total.loc[~np.isnan(total.loc[: ,0]) ,3]))
     hh_per_quantile = total.groupby('quantile').sum()
+    total_damages["Q1"] = total_damages["Q2"] 
+    contents_damages["Q1"] = contents_damages["Q2"]
+    structure_damages["Q1"] = structure_damages["Q2"]
     print(hh_per_quantile.loc[:,3 ])
     print(total_damages)
     
-    order = ['Q1', 'Q2', 'Q3','Q4'] #,'Q5','Q6','Q7','Q8','Q9','Q10']
+    order = ['Q1', 'Q2', 'Q3','Q4'] #,'Q5','Q6','Q7','Q8'] #,'Q9','Q10']
     colors = ['#FF9999', '#00BFFF','#C1FFC1','#CAE1FF','#FFDEAD']
     r = np.arange(4)
-    barWidth = 0.25
+    barWidth = 0.8
     plt.figure(figsize=(10,7))
     plt.bar(r, np.array(pd.DataFrame(structure_damages).loc[order]).squeeze(), color=colors[0], edgecolor='white', width=barWidth, label="Structure")
     plt.bar(r, np.array(pd.DataFrame(contents_damages).loc[order]).squeeze(), bottom=np.array(pd.DataFrame(structure_damages).loc[order]).squeeze(), color=colors[1], edgecolor='white', width=barWidth, label='Contents')
     plt.legend(loc = 'upper left')
     plt.tick_params(labelbottom=True)
     plt.xticks(r, order)
+    plt.ylabel('Fraction of income destroyed by floods with a return period of 100 years (%)')
     #plt.title(str(int(sum(total.loc[: ,3]))) + ' households \n ' + str(int(100 * sum(total.loc[: ,3])/sum(nb_hh))) + '% of households in ' + type_housing + ' housing')
     plt.title(str(int(sum(total.loc[: ,3]))) + ' households')
-    #plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_per_hh_' + type_housing + '_' + option + '.png')  
-    #plt.close()
+    plt.savefig('C:/Users/Charlotte Liotta/Desktop/cape_town/4. Sorties/' + name + '/damages_per_hh_' + type_housing + '_' + '100yr.png')  
+    plt.close()
 
 def weighted_percentile(data, weights, perc):
     """
